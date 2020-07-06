@@ -1,3 +1,4 @@
+library(tidyverse)
 library(shiny)
 library(cowplot)
 
@@ -92,7 +93,11 @@ shinyServer(function(input, output, session) {
 #### Je n'ai rien trouvé de plus élégant pour changer d'onglet à la fin du calcul ##
   fin <-  eventReactive(input$start, {updateTabsetPanel(session, "main", selected = "Graphique")})
   observe(fin())
-    start <- eventReactive(input$start, {
+    start <- eventReactive({
+      input$start
+      input$choixPalette
+    }, 
+    {
     #  if (!is.null(input$dataload))
     #    input <- valeurs[["input"]]
     tmp <- data.frame(variable = sapply(1:input$nbparam, function(i) input[[paste0("variable",i )]]), 
@@ -137,13 +142,26 @@ shinyServer(function(input, output, session) {
     
     breaks <- pretty(-baseline:max(pretty(deltamax)))
     
-    breaks <- pretty(-baseline:max(pretty(deltamax))+baseline)
+    #breaks <- pretty(-baseline:max(pretty(deltamax))+baseline)
+    
+    palette <- input$choixPalette
+    print(palette)
+    col <- if (grepl("Set", palette)) {
+      suppressWarnings(RColorBrewer::brewer.pal(9, name = palette))
+    } else {
+      c("#000000", "#a8a8a8")
+    }
     
     l = nrow(t)/2
-    graph <- ggplot(t, aes(variable, valueICER-baseline, fill=Level)) +  geom_bar(position="identity", stat="identity", width=0.7) + coord_flip() + scale_y_continuous(breaks=breaks-baseline, labels=formatE(breaks, big.mark, decimal.mark), expand=c(0.2, 0.2))+ scale_fill_brewer(palette = "Set1")
+    graph <- ggplot(t, aes(variable, valueICER-baseline, fill=Level)) +  geom_bar(position="identity", stat="identity", width=0.7) + coord_flip() + scale_y_continuous(breaks=breaks-baseline, labels=formatE(breaks, big.mark, decimal.mark), expand=c(0.2, 0.2))
+    if (palette != "N&B"){
+      graph <- graph + scale_fill_brewer(palette = palette)
+    } else {
+      graph <- graph + scale_fill_grey()
+    }
     graph <- graph + ylab(xlabel) + xlab("") + guides(fill=FALSE)
-    valeurs[['graph']] <-  graph +  geom_text(aes(label=valuevar2),vjust=0.5, hjust = c(rep(1.2, l),rep(-0.2, l)), colour=c(rep("#377EB8", l),rep("#E41A1C", l)), size=4) 
-    valeurs[['download']] <-  graph + theme_bw() + geom_text(aes(label=valuevar2),vjust=0.5, hjust = c(rep(1.2, l),rep(-0.2, l)), colour=c(rep("#377EB8", l),rep("#E41A1C", l)), size=3) 
+    valeurs[['graph']] <-  graph +  geom_text(aes(label=valuevar2),vjust=0.5, hjust = c(rep(1.2, l),rep(-0.2, l)), colour=c(rep(col[2], l),rep(col[1], l)), size=4) 
+    valeurs[['download']] <-  graph + theme_bw() + geom_text(aes(label=valuevar2),vjust=0.5, hjust = c(rep(1.2, l),rep(-0.2, l)), colour=c(rep(col[2], l), rep(col[1], l)), size=3) 
     valeurs[['tab']] <- "Graphique"
     print(valeurs$graph + theme_bw(base_size=16))
     #print(ggdraw(switch_axis_position(valeurs[['graph']] + theme_bw(base_size=16), axis="x")))

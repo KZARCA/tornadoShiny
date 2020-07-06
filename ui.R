@@ -45,7 +45,9 @@ shinyUI(
   ),
   tabPanel("Graphique", 
            sidebarLayout(
-             sidebarPanel(selectInput("typegraph", label = "Format d'export", choices = list("png", "pdf", "eps", "tiff", "svg"), selected ="png"),
+             sidebarPanel(
+               selectInput("choixPalette", label = "Couleurs", choices = c(paste0("Set", 1:2), "N&B")),
+               selectInput("typegraph", label = "Format d'export", choices = list("png", "pdf", "eps", "tiff", "svg"), selected ="png"),
                numericInput("nbDPI", label ="Définition (DPI)", value=300, min=300),
                downloadButton("downloadImg", "Télécharger l'image")),
              mainPanel(    
